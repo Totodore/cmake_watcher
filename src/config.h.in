@@ -1,0 +1,4 @@
+// the configured options and settings for Tutorial
+#define VERSION_MAJOR @cmake_watcher_VERSION_MAJOR@
+#define VERSION_MINOR @cmake_watcher_VERSION_MINOR@
+#define PROD_MODE @cmake_watcher_PROD_MODE@

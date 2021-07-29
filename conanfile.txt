@@ -1,0 +1,8 @@
+[requires]
+boost/1.76.0
+
+[generators]
+cmake
+
+[imports]
+include, *.h -> ./src/include @ folder=True
