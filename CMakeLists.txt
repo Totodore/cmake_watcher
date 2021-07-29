@@ -43,6 +43,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(cmake_watcher_PROD_MODE 0)
 else()
 	set(cmake_watcher_PROD_MODE 1)
+	add_definitions("-Os" "-ffunction-sections" "-Wl,--gc-sections")
 endif()
 
 #Load the configuration file
