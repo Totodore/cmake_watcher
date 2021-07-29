@@ -16,26 +16,17 @@ FileWatcher::FileWatcher(string path, chrono::duration<long int, milli> delay) :
 
 FileWatcher* FileWatcher::start() {
 	this->currentStatus = FileStatus::UNKNOWN;
-	if (!this->paused) {
-		for(auto &file : filesystem::recursive_directory_iterator(path)) {
-			this->paths[file.path().string()] = filesystem::last_write_time(file);
-		}
-		this->thread = boost::thread(boost::bind(&FileWatcher::watch, this));
-	} else {
-		this->paused = false;
+	for(auto &file : filesystem::recursive_directory_iterator(path)) {
+		this->paths[file.path().string()] = filesystem::last_write_time(file);
 	}
+	this->thread = boost::thread(boost::bind(&FileWatcher::watch, this));
 	return this;
 }
 
 void FileWatcher::stop() {
+	this->paused = false;
 	this->thread.interrupt();
 	this->paths.clear();
-	this->currentStatus = FileStatus::UNKNOWN;
-}
-
-void FileWatcher::pause() {
-	this->paused = true;
-	this->currentStatus = FileStatus::UNKNOWN;
 }
 
 void FileWatcher::watch() {
