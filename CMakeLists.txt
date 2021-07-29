@@ -31,7 +31,7 @@ execute_process(COMMAND "cd build && conan install .. && cd ..")
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
 #Creating the main target
-add_executable(cmake_watcher src/main.cpp src/FileWatcher.cpp src/KeyboardWatcher.cpp)
+add_executable(cmake_watcher src/main.cpp src/FileWatcher.cpp src/KeyboardWatcher.cpp src/ProgramHandler.cpp)
 
 #Add libraries to the main target
 target_link_libraries(cmake_watcher ${CONAN_LIBS})
