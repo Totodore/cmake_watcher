@@ -16,13 +16,6 @@ void show_help() {
 	cout << "Watch a directory for changes and execute a custom command" << endl;
 }
 
-void on_update(ProgramHandler *handler, FileWatcher *fileWatcher) {
-	handler->restart();
-	fileWatcher->paused = false;
-	fileWatcher->currentStatus = FileWatcher::UNKNOWN;
-}
-
-
 int main(int argc, char *argv[]) {
 
 	if (argc < 4) {
@@ -63,20 +56,21 @@ int main(int argc, char *argv[]) {
 	spdlog::info("Starting file change watcher for directory " + directory.string());
 
 	bool endedLog = false;
+	bool fileAction = false;
 	///We check if there are modified files and if the user pressed a key
 	while (true) {
 		switch (fileWatcher->currentStatus) {
 			case FileWatcher::CREATED:
 				spdlog::info("File created");
-				on_update(programHandler, fileWatcher);
+				fileAction = true;
 				break;
 			case FileWatcher::MODIFIED:
 				spdlog::info("File modified");
-				on_update(programHandler, fileWatcher);
+				fileAction = true;
 				break;
 			case FileWatcher::DELETED:
 				spdlog::info("File deleted");
-				on_update(programHandler, fileWatcher);
+				fileAction = true;
 				break;
 			default:
 				break;
@@ -89,6 +83,13 @@ int main(int argc, char *argv[]) {
 			endedLog = true;
 		} else if (!programHandler->isFinished() && endedLog)
 			endedLog = false;
+	
+		if (fileAction) {
+			programHandler->restart();
+			fileWatcher->paused = false;
+			fileWatcher->currentStatus = FileWatcher::UNKNOWN;
+			fileAction = false;
+		}
 	}
 	fileWatcher->stop();
 	programHandler->stop();
