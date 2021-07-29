@@ -37,37 +37,40 @@ int main(int argc, char *argv[]) {
 	FileWatcher *fileWatcher = (new FileWatcher(directory, chrono::milliseconds(100)))->start();
 	KeyboardWatcher *keyboardWatcher = (new KeyboardWatcher())->start();
 
+	//logging
 	addstr("Starting file change watcher for directory ");
 	printw(directory.c_str());
 	addstr("\n");
-	addstr("Press s to stop, p to pause, r to rescan, q to quit\n");
+	addstr("Press p to pause, r to rescan, q to quit\n");
 
 	///We check if there are modified files and if the user pressed a key
 	while (true) {
 		switch (fileWatcher->currentStatus) {
 			case FileWatcher::CREATED:
 				addstr("File created");
+				fileWatcher->paused = false;
 				fileWatcher->currentStatus = FileWatcher::UNKNOWN;
 				break;
 			case FileWatcher::MODIFIED:
 				addstr("File modified");
+				fileWatcher->paused = false;
 				fileWatcher->currentStatus = FileWatcher::UNKNOWN;
 				break;
 			case FileWatcher::DELETED:
 				addstr("File deleted");
+				fileWatcher->paused = false;
 				fileWatcher->currentStatus = FileWatcher::UNKNOWN;
 				break;
 			default:
 				break;
 		}
-		if (keyboardWatcher->hasKeyPressed('s'))
-			addstr("File Watcher has stopped\n");
-		else if (keyboardWatcher->hasKeyPressed('p'))
+		if (keyboardWatcher->hasKeyPressed('p'))
 			addstr("File Watcher is in pause\n");
 		else if (keyboardWatcher->hasKeyPressed('r'))
 			addstr("Rescanning...\n");
 		else if (keyboardWatcher->hasKeyPressed('q'))
 			break;
 	}
+	fileWatcher->stop();
 	endwin();
 }
