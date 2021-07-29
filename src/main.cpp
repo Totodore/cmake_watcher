@@ -1,12 +1,11 @@
 #include <chrono>
 #include <ratio>
 #include <string>
-#include <ncurses/ncurses.h>
 #include <iostream>
 #include <filesystem>
+#include <spdlog/spdlog.h>
 
 #include "FileWatcher.hpp"
-#include "KeyboardWatcher.hpp"
 #include "ProgramHandler.hpp"
 #include "config.h"
 
@@ -18,10 +17,7 @@ void show_help() {
 }
 
 void on_update(ProgramHandler *handler, FileWatcher *fileWatcher) {
-	if (handler->isFinished())
-		handler->start();
-	else
-		handler->restart();
+	handler->restart();
 	fileWatcher->paused = false;
 	fileWatcher->currentStatus = FileWatcher::UNKNOWN;
 }
@@ -30,11 +26,12 @@ void on_update(ProgramHandler *handler, FileWatcher *fileWatcher) {
 int main(int argc, char *argv[]) {
 
 	if (argc < 4) {
-		cout << "You should provide a directory to watch and a command to execute as well as a context path for the command!" << endl;
+		cout << "Error: You should provide a directory to watch and a command to execute as well as a context path for the command!" << endl;
 		cout << endl;
 		show_help();
 		return 1;
 	}
+
 
 	fs::path directory;
 	string arg1 = argv[1];
@@ -58,48 +55,41 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	//Ncurses init
-	initscr();
-
-	//Readonly terminal
-	noecho();
-
 	//Initializing Filewatcher and keyboardwatcher
 	FileWatcher *fileWatcher = new FileWatcher(directory, chrono::milliseconds(100));
-	KeyboardWatcher *keyboardWatcher = new KeyboardWatcher();
 	ProgramHandler *programHandler = new ProgramHandler(arg3, arg2);
 
 	//logging
-	addstr("Starting file change watcher for directory ");
-	printw(directory.c_str());
-	addstr("\n");
-	addstr("Press p to pause, r to rescan, q to quit\n");
+	spdlog::info("Starting file change watcher for directory " + directory.string());
 
+	bool endedLog = false;
 	///We check if there are modified files and if the user pressed a key
 	while (true) {
 		switch (fileWatcher->currentStatus) {
 			case FileWatcher::CREATED:
-				addstr("File created");
+				spdlog::info("File created");
 				on_update(programHandler, fileWatcher);
 				break;
 			case FileWatcher::MODIFIED:
-				addstr("File modified");
+				spdlog::info("File modified");
 				on_update(programHandler, fileWatcher);
 				break;
 			case FileWatcher::DELETED:
-				addstr("File deleted");
+				spdlog::info("File deleted");
 				on_update(programHandler, fileWatcher);
 				break;
 			default:
 				break;
 		}
-		if (keyboardWatcher->hasKeyPressed('r')) {
-			addstr("Rescanning...\n");
-			fileWatcher->scan();
-		}
-		else if (keyboardWatcher->hasKeyPressed('q'))
-			break;
+		if (programHandler->isFinished() && !programHandler->isErrored() && !endedLog) {
+			spdlog::info("Program execution ended, waiting for file change...");
+			endedLog = true;
+		} else if (programHandler->isFinished() && programHandler->isErrored() && !endedLog) {
+			spdlog::error("Error while executing program, waiting for file change...");
+			endedLog = true;
+		} else if (!programHandler->isFinished() && endedLog)
+			endedLog = false;
 	}
 	fileWatcher->stop();
-	endwin();
+	programHandler->stop();
 }

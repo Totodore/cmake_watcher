@@ -1,5 +1,6 @@
 [requires]
 boost/1.76.0
+spdlog/1.9.0
 
 [generators]
 cmake

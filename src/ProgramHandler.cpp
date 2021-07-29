@@ -1,10 +1,11 @@
 #include "ProgramHandler.hpp"
+
+#include <spdlog/spdlog.h>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <ncurses/ncurses.h>
 #include <thread>
-#include <unistd.h>
+#include <filesystem>
 
 ProgramHandler::ProgramHandler(string command, fs::path contextPath) : command(command), contextPath(contextPath) { }
 
@@ -13,14 +14,21 @@ void ProgramHandler::start() {
 }
 
 void ProgramHandler::run() {
-	if (chdir(contextPath.c_str()) != 0)
+	auto currentPath = fs::current_path();
+	if (chdir(contextPath.c_str()) != 0) {
+		spdlog::error("Could not cd to the execution directory");
 		return;
+	}
 	this->errorCode = system(this->command.c_str());
+	if (chdir(currentPath.c_str()) != 0) {
+		spdlog::error("Could not cd to the base directory");
+	}
 	this->finished = true;
 }
 
 void ProgramHandler::restart() {
-	this->stop();
+	if (!this->finished)
+		this->stop();
 	this->finished = false;
 	this->errorCode = 0;
 	this->start();
