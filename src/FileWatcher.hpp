@@ -18,8 +18,8 @@ public:
 
   FileWatcher(string, chrono::duration<long int, milli>);
 
-  FileWatcher* start();
   void stop();
+	void scan();
 
 private:
   unordered_map<string, filesystem::file_time_type> paths;

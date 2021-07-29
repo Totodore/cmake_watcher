@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
 	noecho();
 
 	//Initializing Filewatcher and keyboardwatcher
-	FileWatcher *fileWatcher = (new FileWatcher(directory, chrono::milliseconds(100)))->start();
-	KeyboardWatcher *keyboardWatcher = (new KeyboardWatcher())->start();
+	FileWatcher *fileWatcher = new FileWatcher(directory, chrono::milliseconds(100));
+	KeyboardWatcher *keyboardWatcher = new KeyboardWatcher();
 
 	//logging
 	addstr("Starting file change watcher for directory ");

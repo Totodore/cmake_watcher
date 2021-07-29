@@ -5,16 +5,13 @@
 #include <ncurses/ncurses.h>
 #include <thread>
 
-KeyboardWatcher::KeyboardWatcher() {}
+KeyboardWatcher::KeyboardWatcher() {
+  this->thread = boost::thread(boost::bind(&KeyboardWatcher::watch, this));
+}
 
 KeyboardWatcher::~KeyboardWatcher() {
   this->stop();
   delete this->pressedKeys;
-}
-
-KeyboardWatcher* KeyboardWatcher::start() {
-  this->thread = boost::thread(boost::bind(&KeyboardWatcher::watch, this));
-	return this;
 }
 
 void KeyboardWatcher::stop() { this->thread.interrupt(); }

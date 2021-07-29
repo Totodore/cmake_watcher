@@ -9,7 +9,6 @@ public:
 	KeyboardWatcher();
 	~KeyboardWatcher();
 	
-	KeyboardWatcher* start();
 	void stop();
 	bool hasKeyPressed(const char key);
 	
