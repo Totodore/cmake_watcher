@@ -5,7 +5,6 @@ build() {
 	cd build/
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	cmake --build .
-	./bin/cmake_watcher ..
 }
 
 build
