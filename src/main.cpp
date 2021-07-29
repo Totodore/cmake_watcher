@@ -8,6 +8,7 @@
 #include "FileWatcher.hpp"
 #include "ProgramHandler.hpp"
 #include "config.h"
+#include "spdlog/common.h"
 
 namespace fs = filesystem;
 
@@ -47,6 +48,8 @@ int main(int argc, char *argv[]) {
 		cout << directory << endl;
 		return 1;
 	}
+
+	spdlog::set_level(PROD_MODE ? spdlog::level::info : spdlog::level::debug);
 
 	//Initializing Filewatcher and keyboardwatcher
 	FileWatcher *fileWatcher = new FileWatcher(directory, chrono::milliseconds(100));
