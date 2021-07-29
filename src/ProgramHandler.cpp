@@ -19,6 +19,8 @@ void ProgramHandler::run() {
 		spdlog::error("Could not cd to the execution directory");
 		return;
 	}
+	spdlog::debug("Current dir " + fs::current_path().string());
+	spdlog::debug("Executing " + this->command);
 	this->errorCode = system(this->command.c_str());
 	if (chdir(currentPath.c_str()) != 0) {
 		spdlog::error("Could not cd to the base directory");
