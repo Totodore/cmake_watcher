@@ -21,7 +21,9 @@ public:
 private:
 	string command;
 	fs::path contextPath;
+	fs::path basePath;
 	boost::thread thread;
 	bool finished = false;
 	void run();
+	void baseChdir();
 };

@@ -12,6 +12,10 @@
 
 namespace fs = filesystem;
 
+/**
+ * @brief Function that display basic help and explanations on the program
+ * 
+ */
 void show_help() {
 	cout << "Usage: cmake_watcher [WATCH_PATH] [COMMAND_PATH] [COMMAND]" << endl;
 	cout << "Watch a directory for changes and execute a custom command" << endl;
@@ -19,6 +23,10 @@ void show_help() {
 
 int main(int argc, char *argv[]) {
 
+	/**
+	 * @brief If not all the parameters are specified we display an error and show help
+	 * 
+	 */
 	if (argc < 4) {
 		cout << "Error: You should provide a directory to watch and a command to execute as well as a context path for the command!" << endl;
 		cout << endl;
@@ -27,21 +35,25 @@ int main(int argc, char *argv[]) {
 	}
 
 
+	/**
+	 * @brief We set all the parameters given to the program
+	 * 
+	 */
 	fs::path directory;
-	string arg1 = argv[1];
-	string arg2 = argv[2];
-	string arg3 = argv[3];
+	string sourcePath = argv[1];
+	string commandPath = argv[2];
+	string command = argv[3];
 	for (int i = 4; i < argc; i++) {
-		arg3 += " ";
-		arg3 += argv[i];
+		command += " ";
+		command += argv[i];
 	}
 
-	if (arg1 == "help" || arg1 == "-h" || arg1 == "--help")
+	if (sourcePath == "help" || sourcePath == "-h" || sourcePath == "--help")
 		show_help();
-	else if (arg1[0] != '/')
-		directory = fs::current_path().concat("/" + arg1);
+	else if (sourcePath[0] != '/')
+		directory = fs::current_path().concat("/" + sourcePath);
 	else
-		directory = fs::current_path().concat(arg1);
+		directory = fs::current_path().concat(sourcePath);
 
 	if (!fs::exists(directory)) {
 		cout << "The provided directory does not exists: ";
@@ -51,16 +63,19 @@ int main(int argc, char *argv[]) {
 
 	spdlog::set_level(PROD_MODE ? spdlog::level::info : spdlog::level::debug);
 
-	//Initializing Filewatcher and keyboardwatcher
+	//Initializing Filewatcher and ProgramHandler
 	FileWatcher *fileWatcher = new FileWatcher(directory, chrono::milliseconds(100));
-	ProgramHandler *programHandler = new ProgramHandler(arg3, arg2);
+	ProgramHandler *programHandler = new ProgramHandler(command, commandPath);
 
 	//logging
 	spdlog::info("Starting file change watcher for directory " + directory.string());
 
 	bool endedLog = false;
 	bool fileAction = false;
-	///We check if there are modified files and if the user pressed a key
+	/**
+	 * @brief Infinite loop that check if file are updated
+	 * 
+	 */
 	while (true) {
 		switch (fileWatcher->currentStatus) {
 			case FileWatcher::CREATED:
@@ -68,7 +83,7 @@ int main(int argc, char *argv[]) {
 				fileAction = true;
 				break;
 			case FileWatcher::MODIFIED:
-				spdlog::info("File modified");
+				spdlog::info("Modified file: " + fileWatcher->currentActionPath.string());
 				fileAction = true;
 				break;
 			case FileWatcher::DELETED:

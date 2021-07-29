@@ -6,7 +6,7 @@
 #include <boost/thread.hpp>
 
 using namespace std;
-
+namespace fs = filesystem;
 
 class FileWatcher {
 
@@ -15,6 +15,7 @@ public:
 	
 	FileStatus currentStatus = FileStatus::UNKNOWN;
 	bool paused = false;
+	fs::path currentActionPath;
 
   FileWatcher(string, chrono::duration<long int, milli>);
 
@@ -22,10 +23,10 @@ public:
 	void scan();
 
 private:
-  unordered_map<string, filesystem::file_time_type> paths;
-  string path;
+  unordered_map<string, fs::file_time_type> paths;
+  fs::path watchingPath;
 	boost::thread thread;
   chrono::duration<long int, milli> delay;
-
+	
   void watch();
 };
