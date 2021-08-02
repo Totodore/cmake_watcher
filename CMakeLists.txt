@@ -1,6 +1,3 @@
-#Including fetchcontent lib
-include(FetchContent)
-
 cmake_minimum_required(VERSION 3.14)
 
 # set the project name and version
@@ -14,20 +11,11 @@ set(CONAN_CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD})
 add_definitions("-std=c++17")
 
 #Conan setup
+execute_process(COMMAND "cd build && conan install .. && cd ..")
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-#Fetching reproc
-set(REPROC++ ON)
-FetchContent_Declare(
-  reproc
-  GIT_REPOSITORY https://github.com/DaanDeMeyer/reproc
-  GIT_TAG        v14.2.2
-)
-FetchContent_MakeAvailable(reproc)
-
 #Importing conan libraries
-execute_process(COMMAND "cd build && conan install .. && cd ..")
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
 #Creating the main target
@@ -35,7 +23,7 @@ add_executable(cmake_watcher src/main.cpp src/FileWatcher.cpp src/ProgramHandler
 
 #Add libraries to the main target
 target_link_libraries(cmake_watcher ${CONAN_LIBS})
-include_directories("${PROJECT_BINARY_DIR}")
+include_directories(${PROJECT_BINARY_DIR})
 
 #Inject build type information into config file
 #Add optimization flag for release
@@ -47,4 +35,4 @@ else()
 endif()
 
 #Load the configuration file
-configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/config.h")
+configure_file(src/config.h.in "${CMAKE_BINARY_DIR}/config.h")

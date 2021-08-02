@@ -1,0 +1,6 @@
+{
+  "exec": [
+    "cmake ..",
+    "cmake --build ."
+  ]
+}

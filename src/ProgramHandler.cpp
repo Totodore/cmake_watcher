@@ -1,61 +1,78 @@
 #include "ProgramHandler.hpp"
-
-#include <spdlog/spdlog.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/process.hpp>
 #include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <thread>
 #include <filesystem>
+#include <spdlog/spdlog.h>
+#include <thread>
+#include <vector>
 
-ProgramHandler::ProgramHandler(string command, fs::path contextPath) : command(command), contextPath(contextPath) { 
-	this->basePath = fs::current_path();
+namespace tree = boost::property_tree;
+
+
+ProgramHandler::ProgramHandler(fs::path contextPath) : contextPath(contextPath) {
+  basePath = fs::current_path();
+
+	tree::ptree root;
+	tree::read_json("watcher.conf.json", root);
+  for (tree::ptree::value_type &command : root.get_child("exec")) {
+    commands.push_back(command.second.data());
+	}
 }
 
 void ProgramHandler::start() {
-  this->thread = boost::thread(boost::bind(&ProgramHandler::run, this));
-}
-
-void ProgramHandler::run() { 
-	try {
-		spdlog::debug("Current dir " + fs::current_path().string());
-	if (chdir(contextPath.c_str()) != 0) {
-		spdlog::error("Could not cd to the execution directory");
-		return;
-	}
-	spdlog::debug("Executing " + this->command);
-	this->errorCode = system(this->command.c_str());
-	this->baseChdir();
-	this->finished = true;
-	} catch(boost::thread_interrupted&) {
-		this->finished = true;
-		spdlog::debug("thread thread_interrupted");
-	}
+  spdlog::debug("Current dir " + fs::current_path().string());
+  if (chdir(contextPath.c_str()) != 0) {
+    spdlog::error("Could not cd to the execution directory");
+    return;
+  }
+  for (auto &command : commands) {
+    if ((children.size() > 0 && children.back().exit_code() != 0) || terminate) {
+			terminate = false;
+      break;
+    }
+    spdlog::debug("Executing program: {}", command);
+    try {
+      children.push_back(
+				process::child(command, process::std_out > stdout, process::std_err > stderr, process::std_in < stdin)
+			);
+      spdlog::debug("Process started {}", command);
+      children.back().wait();
+			if (isErrored())
+				break;
+    } catch (const process::process_error &e) {
+      spdlog::error("Could not execute program: {} ({})", command, e.code().message());
+      break;
+    }
+  }
+  baseChdir();
 }
 
 void ProgramHandler::restart() {
-	if (!this->finished)
-		this->stop();
-	this->finished = false;
-	this->errorCode = 0;
-	this->start();
+  spdlog::debug("finished {}", isFinished());
+  if (!isFinished())
+    stop();
+  start();
 }
 
 bool ProgramHandler::isErrored() {
-	return this->errorCode > 0;
+  return children.size() > 0 && children.back().exit_code() != 0;
 }
 
 bool ProgramHandler::isFinished() {
-	return this->finished;
+  return isErrored() || children.size() == commands.size();
 }
 
 void ProgramHandler::baseChdir() {
-	if (chdir(basePath.c_str()) != 0)
-		spdlog::error("Could not cd to the base directory");
+  if (chdir(basePath.c_str()) != 0)
+    spdlog::error("Could not cd to the base directory");
 }
 
-void ProgramHandler::stop() { 
-	spdlog::debug("test");
-	this->thread.interrupt();
-	this->baseChdir();
+void ProgramHandler::stop() {
+  spdlog::debug("stopping program");
+  children.back().terminate();
+	terminate = true;
+  baseChdir();
 }
-

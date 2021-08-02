@@ -1,16 +1,20 @@
+#include "boost/process/detail/child_decl.hpp"
 #include <list>
-#include <boost/thread.hpp>
 #include <filesystem>
+#include <thread>
+#include <unistd.h>
+#include <boost/process.hpp>
 
 using namespace std;
 namespace fs = filesystem;
+namespace process = boost::process;
 
 class ProgramHandler {
 
 public:
 	int errorCode;
-	ProgramHandler(string, fs::path);
-	~ProgramHandler();
+	ProgramHandler(fs::path);
+
 	
 	void start();
 	void stop();
@@ -19,11 +23,14 @@ public:
 	bool isFinished();
 
 private:
-	string command;
 	fs::path contextPath;
 	fs::path basePath;
-	boost::thread thread;
-	bool finished = false;
+	vector<process::child> children;
+	vector<string> commands;
+	bool terminate = false;
+
 	void run();
+	void spawn();
 	void baseChdir();
+	void sigquitHandler(int);
 };
